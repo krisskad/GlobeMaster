@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import NewsTimeSeries
+from .models import NewsTimeSeries, Publication
 
 
 class UploadSerializer(serializers.Serializer):
@@ -24,6 +24,15 @@ class TextSerializer(serializers.Serializer):
         fields = ['search',]
 
 
+class ChoiceSerializer(serializers.Serializer):
+    PUBLICATIONS_CHOICES = list(Publication.objects.all().values_list("id", "name"))
+    PUBLICATIONS_CHOICES.insert(0,(0, "all"))
+    publication = serializers.ChoiceField(choices=PUBLICATIONS_CHOICES)
+
+    class Meta:
+        fields = ['publication',]
+
+
 class ChooseFeature(serializers.Serializer):
     location = serializers.BooleanField(default=False)
     mentioned = serializers.BooleanField(default=False)
@@ -35,6 +44,7 @@ class ChooseFeature(serializers.Serializer):
 
 class TextInputBoxSerializer(serializers.Serializer):
     search = TextSerializer()
+    select = ChoiceSerializer()
     date = DatePickerSerializer()
     fetch = ChooseFeature()
 

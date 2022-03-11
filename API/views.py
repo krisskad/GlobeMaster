@@ -215,12 +215,16 @@ class NewsLookupSet(ViewSet):
         queryset = NewsTimeSeries.objects.all().order_by("-date")
         start_date = queryset.last().date
         end_date = queryset.first().date
+        count = queryset.count()
+        publications = list(Publication.objects.all().values_list("name", flat=True))
         # print(start_date)
 
         queryset = {
-            "USE CASE": "Search the particular word in news database for selected period & get sentiment along with it",
-            "TIP": "Choose dates to get results between that period",
-            "AVAILABLE DATE": f"{start_date} to {end_date}"
+            "USE CASE": "Search keyword, Filter by dates & get required response",
+            "TIP": "Choose check box to get that data in response",
+            "AVAILABLE DATE": f"{start_date} to {end_date}",
+            "TOTAL RECORDS": f"{count}",
+            "TOTAL PUBLICATIONS": publications
         }
         return Response(queryset)
 
@@ -235,6 +239,7 @@ class NewsLookupSet(ViewSet):
         sentiment = requests.data.get("fetch.sentiment", None)
         location = requests.data.get("fetch.location", None)
         mentioned = requests.data.get("fetch.mentioned", None)
+        publication = requests.data.get("select.publication", None)
 
         result = NewsTimeSeries.objects.all()
 
@@ -247,6 +252,10 @@ class NewsLookupSet(ViewSet):
             result = result.filter(
                 date__lte=end_date
             )
+
+        # print(publication)
+        if int(publication) > 0:
+            result = result.filter(publication=publication)
 
         if search:
             result = result.filter(reduce(or_, [Q(title__icontains=search), Q(content__icontains=search)]))
